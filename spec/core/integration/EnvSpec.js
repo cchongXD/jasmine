@@ -404,6 +404,12 @@ describe("Env integration", function() {
         });
       });
 
+      env.describe('another suite', function() {
+        env.it('spec 2', function() {
+          expect(j$.isSpy(testObj.foo)).toBe(false);
+        });
+      });
+
     env.addReporter({ jasmineDone: done });
 
     env.execute();
@@ -638,10 +644,12 @@ describe("Env integration", function() {
 
     reporter.jasmineDone.and.callFake(function() {
       var firstSpecResult = reporter.specDone.calls.first().args[0],
-          secondSpecResult = reporter.specDone.calls.mostRecent().args[0];
+          secondSpecResult = reporter.specDone.calls.argsFor(0)[0],
+          thirdSpecResult = reporter.specDone.calls.mostRecent().args[0];
 
       expect(firstSpecResult.status).toEqual("passed");
       expect(secondSpecResult.status).toEqual("passed");
+      expect(thirdSpecResult.status).toEqual("failed");
 
       done();
     });
@@ -656,6 +664,12 @@ describe("Env integration", function() {
       });
 
       env.it("with the same custom tester", function() {
+        env.expect("a").toEqual("b");
+      });
+    });
+
+    env.describe("another suite", function() {
+      env.it("without the custom tester", function(){
         env.expect("a").toEqual("b");
       });
     });
@@ -705,10 +719,12 @@ describe("Env integration", function() {
 
     reporter.jasmineDone.and.callFake(function() {
       var firstSpecResult = reporter.specDone.calls.first().args[0],
-          secondSpecResult = reporter.specDone.calls.mostRecent().args[0];
+          secondSpecResult = reporter.specDone.calls.argsFor(1)[0],
+          thirdSpecResult = reporter.specDone.calls.mostRecent().args[0];
 
       expect(firstSpecResult.status).toEqual("passed");
       expect(secondSpecResult.status).toEqual("passed");
+      expect(thirdSpecResult.status).toEqual("failed");
 
       done();
     });
@@ -722,7 +738,13 @@ describe("Env integration", function() {
         env.expect(["a"]).toContain("b");
       });
 
-      env.it("without a custom tester", function() {
+      env.it("also with the custom tester", function() {
+        env.expect(["a"]).toContain("b");
+      });
+    });
+
+    env.describe("another suite", function() {
+      env.it("without the custom tester", function() {
         env.expect(["a"]).toContain("b");
       });
     });
@@ -765,8 +787,14 @@ describe("Env integration", function() {
         expect(env.expect().toFoo).toBeDefined();
       });
 
-      env.it("without a custom matcher", function() {
+      env.it("with the same custom matcher", function() {
         expect(env.expect().toFoo).toBeDefined();
+      });
+    });
+
+    env.describe("another suite", function() {
+      env.it("no longer has the custom matcher", function() {
+        expect(env.expect().toFoo).not.toBeDefined();
       });
     });
 

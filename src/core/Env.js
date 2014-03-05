@@ -17,11 +17,15 @@ getJasmineRequireObj().Env = function(j$) {
     var runnableResources = {};
 
     var currentSpec = null;
-    var currentSuite = null;
+    var currentlyExecutingSuites = [];
     var currentDeclarationSuite = null;
 
+    var currentSuite = function() {
+      return currentlyExecutingSuites[currentlyExecutingSuites.length - 1];
+    }
+
     var currentRunnable = function() {
-      return currentSpec || currentSuite;
+      return currentSpec || currentSuite();
     }
 
     var reporter = new j$.ReportDispatcher([
@@ -86,12 +90,7 @@ getJasmineRequireObj().Env = function(j$) {
     };
 
     var clearResourcesForRunnable = function(id) {
-        var spies = runnableResources[id].spies;
-        for (var i = 0; i < spies.length; i++) {
-          var spyEntry = spies[i];
-          spyEntry.baseObj[spyEntry.methodName] = spyEntry.originalValue;
-        }
-
+        spyRegistry.clearSpies();
         delete runnableResources[id];
     };
 
@@ -202,32 +201,12 @@ getJasmineRequireObj().Env = function(j$) {
       reporter.addReporter(reporterToAdd);
     };
 
-    this.spyOn = function(obj, methodName) {
-      if (j$.util.isUndefined(obj)) {
-        throw new Error('spyOn could not find an object to spy upon for ' + methodName + '()');
-      }
+    var spyRegistry = new j$.SpyRegistry({currentSpies: function() {
+      return runnableResources[currentRunnable().id].spies;
+    }});
 
-      if (j$.util.isUndefined(obj[methodName])) {
-        throw new Error(methodName + '() method does not exist');
-      }
-
-      if (obj[methodName] && j$.isSpy(obj[methodName])) {
-        //TODO?: should this return the current spy? Downside: may cause user confusion about spy state
-        throw new Error(methodName + ' has already been spied upon');
-      }
-
-      var spy = j$.createSpy(methodName, obj[methodName]);
-
-      runnableResources[currentRunnable().id].spies.push({
-        spy: spy,
-        baseObj: obj,
-        methodName: methodName,
-        originalValue: obj[methodName]
-      });
-
-      obj[methodName] = spy;
-
-      return spy;
+    this.spyOn = function() {
+      return spyRegistry.spyOn.apply(spyRegistry, arguments);
     };
 
     var suiteFactory = function(description) {
@@ -239,8 +218,8 @@ getJasmineRequireObj().Env = function(j$) {
         queueRunner: queueRunnerFactory,
         onStart: suiteStarted,
         resultCallback: function(attrs) {
-          currentSuite = null;
           clearResourcesForRunnable(suite.id);
+          currentlyExecutingSuites.pop();
           reporter.suiteDone(attrs);
         }
       });
@@ -249,7 +228,7 @@ getJasmineRequireObj().Env = function(j$) {
       return suite;
 
       function suiteStarted(suite) {
-        currentSuite = suite;
+        currentlyExecutingSuites.push(suite);
         defaultResourcesForRunnable(suite.id, suite.parentSuite.id);
         reporter.suiteStarted(suite.result);
       }
@@ -316,8 +295,8 @@ getJasmineRequireObj().Env = function(j$) {
       return spec;
 
       function specResultCallback(result) {
-        currentSpec = null;
         clearResourcesForRunnable(spec.id);
+        currentSpec = null;
         reporter.specDone(result);
       }
 
