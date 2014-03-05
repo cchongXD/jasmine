@@ -762,7 +762,6 @@ describe("Env integration", function() {
       env.beforeAll(function() { env.addMatchers(matchers); });
 
       env.it("with a custom matcher", function() {
-        env.addMatchers(matchers);
         expect(env.expect().toFoo).toBeDefined();
       });
 

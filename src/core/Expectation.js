@@ -9,7 +9,7 @@ getJasmineRequireObj().Expectation = function() {
 
     var customMatchers = options.customMatchers || {};
     for (var matcherName in customMatchers) {
-      this[matcherName] = customMatchers[matcherName];
+      this[matcherName] = Expectation.prototype.wrapCompare(matcherName, customMatchers[matcherName]);
     }
   }
 

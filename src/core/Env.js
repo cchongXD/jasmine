@@ -75,7 +75,7 @@ getJasmineRequireObj().Env = function(j$) {
     };
 
     var defaultResourcesForRunnable = function(id, parentRunnableId) {
-      var resources = {spies: [], customEqualityTesters: [], customMatchers: []};
+      var resources = {spies: [], customEqualityTesters: [], customMatchers: {}};
 
       if(runnableResources[parentRunnableId]){
         resources.customEqualityTesters = j$.util.clone(runnableResources[parentRunnableId].customEqualityTesters);

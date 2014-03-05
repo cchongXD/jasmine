@@ -31,14 +31,16 @@ getJasmineRequireObj().util = function() {
   };
 
   util.clone = function(obj) {
+    if (Object.prototype.toString.apply(obj) === "[object Array]") {
+      return obj.slice();
+    }
+
     var cloned = {};
     for (var prop in obj) {
       if (obj.hasOwnProperty(prop)) {
         cloned[prop] = obj[prop];
       }
     }
-
-    cloned.__proto__ = obj.__proto__;
 
     return cloned;
   }
